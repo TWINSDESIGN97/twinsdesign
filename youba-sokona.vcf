@@ -1,0 +1,13 @@
+BEGIN:VCARD
+VERSION:3.0
+N:Sokona;Youba;;;
+FN:Youba Sokona
+ORG:TWINSDESIGN
+TITLE:Data Scientist et développeur full-stack
+TEL;TYPE=CELL,VOICE:+22373470813
+EMAIL;TYPE=INTERNET:youbsleader@gmail.com
+ADR;TYPE=WORK:;;ATT Bougou 320 Logements;Bamako;;;Mali
+URL:https://twinsdesign.org
+NOTE:Data science et IA · Big Data · Développement web\, mobile et logiciel
+ s de caisse · Maintenance informatique · Graphisme et UI/UX
+END:VCARD
