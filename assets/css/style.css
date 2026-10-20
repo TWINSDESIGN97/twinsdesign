@@ -71,7 +71,9 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .site-header { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--sheet); border-bottom: 1px solid var(--rule); }
 .site-header .wrap { display: flex; align-items: center; gap: var(--s3); min-height: 68px; }
 .brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); }
-.brand svg { width: 34px; height: 34px; flex: 0 0 auto; }
+.brand-logo { height: 40px; width: auto; flex: 0 0 auto; }
+.site-footer .brand-logo { height: 46px; background: #FFFFFF; padding: 4px 8px; border-radius: var(--radius); box-sizing: content-box; }
+.plate-logo { width: 100%; height: auto; }
 .brand-name { font-family: var(--font-display); font-stretch: 118%; font-weight: 800; font-size: .98rem; letter-spacing: .04em; }
 .brand-name span { color: var(--gold-ink); }
 .nav { display: flex; gap: 4px; margin-left: auto; }
