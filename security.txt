@@ -1,0 +1,6 @@
+Contact: mailto:youbsleader@gmail.com
+Contact: https://wa.me/22373470813
+Expires: 2027-10-20T00:00:00.000Z
+Preferred-Languages: fr, en
+Canonical: https://twinsdesign.org/.well-known/security.txt
+Canonical: https://twinsdesign.org/security.txt
