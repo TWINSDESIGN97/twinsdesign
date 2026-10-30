@@ -14,7 +14,7 @@
   --sheet: #FFFFFF;
   --ink: #111A2C;
   --ink-2: #465166;
-  --ink-3: #6E788B;
+  --ink-3: #5F6979;
   --rule: #D8DCE4;
   --rule-strong: #B9C0CC;
   --navy: #1B2A44;
@@ -24,7 +24,7 @@
   --gold: #C08A2B;
   --gold-ink: #8A611F;
   --gold-soft: #E3B866;
-  --wa: #1E9E52;
+  --wa: #178042;
 
   /* Typographie : titres étendus, texte technique, étiquettes à chasse fixe */
   --font-display: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
@@ -236,7 +236,7 @@ a.svc:hover h3 { text-decoration: underline; text-decoration-color: var(--gold);
 .fiche .meta { margin-top: var(--s2); }
 
 .panel { background: var(--sheet); border: 1px solid var(--rule); padding: var(--s4); display: grid; gap: var(--s2); align-content: start; }
-.panel h3 { font-size: var(--fs-h3); }
+.panel h2, .panel h3 { font-size: var(--fs-h3); }
 .panel p { color: var(--ink-2); }
 
 /* ---------- Contact ---------- */
@@ -272,7 +272,7 @@ a.svc:hover h3 { text-decoration: underline; text-decoration-color: var(--gold);
 .site-footer .brand { color: #FFFFFF; }
 .site-footer .brand-name span { color: var(--gold-soft); }
 .site-footer p { margin-top: var(--s2); font-size: .92rem; max-width: 42ch; }
-.site-footer h4 { font-family: var(--font-mono); font-stretch: 100%; font-weight: 500; font-size: var(--fs-label); letter-spacing: .14em; text-transform: uppercase; color: var(--on-navy-2); margin-bottom: 12px; }
+.site-footer h2 { font-family: var(--font-mono); font-stretch: 100%; font-weight: 500; font-size: var(--fs-label); letter-spacing: .14em; text-transform: uppercase; color: var(--on-navy-2); margin-bottom: 12px; }
 .site-footer ul { list-style: none; display: grid; gap: 8px; }
 .site-footer a { text-decoration: none; color: var(--on-navy); font-size: .93rem; }
 .site-footer a:hover { color: var(--gold-soft); }
