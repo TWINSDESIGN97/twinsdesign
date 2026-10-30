@@ -1,0 +1,104 @@
+# Audit de securite de twinsdesign.org
+# (c) 2026 Youba Sokona, TWINSDESIGN. Tous droits reserves.
+name: Audit de securite
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Controles du site et du domaine
+        shell: bash
+        run: |
+          set -u
+          D=twinsdesign.org
+          ERR=0
+          R="$GITHUB_STEP_SUMMARY"
+          echo "## Audit du $(date -u +%Y-%m-%d) sur $D" >> "$R"
+          ok() { echo "- OK : $1" >> "$R"; }
+          ko() { echo "- ECHEC : $1" >> "$R"; echo "::error::$1"; ERR=$((ERR+1)); }
+
+          echo "### Fichiers du depot" >> "$R"
+          for f in CNAME index.html 404.html robots.txt sitemap.xml security.txt LICENSE carte.html youba-sokona.vcf; do
+            if [ -f "$f" ]; then ok "$f present"; else ko "$f manquant"; fi
+          done
+          if [ "$(tr -d '[:space:]' < CNAME)" = "$D" ]; then ok "CNAME = $D"; else ko "CNAME modifie"; fi
+
+          echo "### Securite du code" >> "$R"
+          for f in *.html; do
+            grep -q "default-src 'self'" "$f" || ko "$f : politique CSP absente"
+            if grep -Eq '<script>|<script [^>]*>[^<]+</script>' "$f"; then ko "$f : script en ligne"; fi
+            if grep -Eq ' style="| on[a-z]+="' "$f"; then ko "$f : style ou evenement en ligne"; fi
+            if grep -v 'sitemaps.org' "$f" | grep -v 'w3.org' | grep -Eq '(href|src)="http://'; then ko "$f : lien non chiffre (http)"; fi
+          done
+          ok "CSP, scripts et styles verifies sur $(ls *.html | wc -l) pages"
+
+          echo "### Donnees personnelles" >> "$R"
+          P='date de naissance|(né|ne) le [0-9]|[0-9]{2} ans|320 logements|Bac\+4|\.pdf"'
+          if grep -Eil "$P" *.html *.vcf > /dev/null; then
+            ko "donnee sensible ou CV telechargeable : $(grep -Eil "$P" *.html *.vcf | tr '\n' ' ')"
+          else
+            ok "aucune date de naissance, age, adresse complete ni CV telechargeable"
+          fi
+
+          echo "### Liens internes et plan du site" >> "$R"
+          E0=$ERR
+          for f in *.html; do
+            for t in $(grep -Eo '(href|src)="[^"#?]+' "$f" | sed -E 's/^(href|src)="//' | grep -v ':' | sort -u); do
+              [ -e "${t#/}" ] || ko "$f : lien casse vers $t"
+            done
+          done
+          for u in $(grep -Eo "<loc>https://$D/[^<]*" sitemap.xml | sed "s#<loc>https://$D/##"); do
+            [ -z "$u" ] && continue
+            [ -f "$u" ] || ko "sitemap : $u introuvable"
+          done
+          if [ "$ERR" -eq "$E0" ]; then ok "liens internes et sitemap controles"; fi
+
+          echo "### security.txt" >> "$R"
+          EXP=$(grep -i '^Expires:' security.txt | head -1 | awk '{print $2}' | cut -c1-10)
+          if [ -n "$EXP" ]; then
+            LEFT=$(( ( $(date -d "$EXP" +%s) - $(date +%s) ) / 86400 ))
+            if [ "$LEFT" -gt 30 ]; then ok "security.txt valable encore $LEFT jours"; else ko "security.txt expire dans $LEFT jours ($EXP)"; fi
+          else
+            ko "security.txt sans date Expires"
+          fi
+
+          echo "### Site en ligne" >> "$R"
+          C=$(curl -s -o /dev/null -w '%{http_code}' "https://$D/")
+          if [ "$C" = "200" ]; then ok "https://$D repond 200"; else ko "https://$D repond $C"; fi
+          L=$(curl -s -o /dev/null -w '%{redirect_url}' "http://$D/")
+          if [[ "$L" == https://$D/* ]]; then ok "http redirige vers https"; else ko "http ne redirige pas vers https ($L)"; fi
+          L=$(curl -s -o /dev/null -w '%{redirect_url}' "https://www.$D/")
+          if [[ "$L" == https://$D/* ]]; then ok "www redirige vers $D"; else ko "www ne redirige pas ($L)"; fi
+          for p in services.html projets.html a-propos.html contact.html carte.html security.txt sitemap.xml; do
+            C=$(curl -s -o /dev/null -w '%{http_code}' "https://$D/$p")
+            [ "$C" = "200" ] || ko "https://$D/$p repond $C"
+          done
+          ok "pages principales en ligne"
+          END=$(echo | openssl s_client -servername "$D" -connect "$D:443" 2>/dev/null | openssl x509 -noout -enddate | cut -d= -f2)
+          DAYS=$(( ( $(date -d "$END" +%s) - $(date +%s) ) / 86400 ))
+          if [ "$DAYS" -gt 14 ]; then ok "certificat HTTPS valable encore $DAYS jours"; else ko "certificat HTTPS expire dans $DAYS jours"; fi
+
+          echo "### DNS" >> "$R"
+          A=$(dig +short A "$D" | sort | tr '\n' ' ')
+          if [ "$A" = "185.199.108.153 185.199.109.153 185.199.110.153 185.199.111.153 " ]; then ok "4 enregistrements A GitHub Pages"; else ko "enregistrements A modifies : $A"; fi
+          if dig +short TXT "$D" | grep -q 'google-site-verification='; then ok "TXT Google Search Console present"; else ko "TXT Google Search Console absent"; fi
+          if dig +short CAA "$D" | grep -q 'letsencrypt.org'; then ok "CAA Let's Encrypt present"; else ko "CAA absent ou modifie"; fi
+          if dig +short TXT "_dmarc.$D" | grep -q 'p=quarantine'; then ok "DMARC p=quarantine"; else ko "DMARC absent ou affaibli"; fi
+          if dig +short MX "$D" | grep -q .; then ok "MX present (redirection contact@)"; else ko "aucun MX : contact@ ne recoit plus"; fi
+          if dig @1.1.1.1 +dnssec "$D" A | grep -q 'flags:.* ad'; then ok "DNSSEC valide"; else ko "DNSSEC non valide"; fi
+
+          echo "" >> "$R"
+          if [ "$ERR" -gt 0 ]; then echo "**$ERR probleme(s) detecte(s).**" >> "$R"; exit 1; fi
+          echo "**Aucun probleme detecte.**" >> "$R"
